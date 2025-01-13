@@ -1,6 +1,7 @@
 ﻿using GpsUtil.Location;
 using Microsoft.AspNetCore.Mvc;
 using TourGuide.LibrairiesWrappers.Interfaces;
+using TourGuide.Services;
 using TourGuide.Services.Interfaces;
 using TourGuide.Users;
 using TripPricer;
@@ -37,19 +38,21 @@ public class TourGuideController : ControllerBase
     [HttpGet("getNearbyAttractions")]
     public ActionResult<List<object>> GetNearbyAttractions(
     [FromQuery] string userName,
-    [FromServices] ITourGuideService tourGuideService,
     [FromServices] IRewardsService rewardService,
     [FromServices] IRewardCentral rewardCentral)
     {
-        var visitedLocation = tourGuideService.GetUserLocation(GetUser(userName));
-        var attractions = tourGuideService.GetNearByAttractions(visitedLocation);
+        var user = new User(Guid.NewGuid(), "jon", "000", "jon@tourGuide.com")/* GetUser(userName)*/;
+        var visitedLocation = _tourGuideService.GetUserLocation(user);
+        List<Attraction> closestAttractions = _tourGuideService.GetNearByAttractions(visitedLocation);
 
-        var result = attractions.Select(attraction => new
+        var result = closestAttractions.Select(attraction => new
         {
-            attraction.AttractionName,
+            AttractionName = attraction.AttractionName,
             AttractionLocation = new Locations(attraction.Latitude, attraction.Longitude),
             UserLocation = visitedLocation.Location,
-            DistanceFromAttraction = rewardService.GetDistance(new Locations(attraction.Latitude, attraction.Longitude), visitedLocation.Location),
+            DistanceFromAttraction = rewardService.GetDistance(
+                new Locations(attraction.Latitude, attraction.Longitude),
+                visitedLocation.Location),
             RewardPoints = rewardCentral.GetAttractionRewardPoints(attraction.AttractionId, visitedLocation.UserId)
         }).ToList();
 
