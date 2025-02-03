@@ -47,7 +47,7 @@ public class RewardsService : IRewardsService
     {
         count++;
         List<VisitedLocation> userLocations = user.VisitedLocations;
-        List<Attraction> attractions = GetAttractionsCached();
+        List<Attraction> attractions = GetAttractionsCached(); // étudier le ConcurrentBag pour la récupération de la liste
 
         Parallel.ForEach(userLocations, visitedLocation =>
         {
