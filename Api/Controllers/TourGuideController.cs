@@ -41,7 +41,7 @@ public class TourGuideController : ControllerBase
     [FromServices] IRewardsService rewardService,
     [FromServices] IRewardCentral rewardCentral)
     {
-        var user = new User(Guid.NewGuid(), "jon", "000", "jon@tourGuide.com")/* GetUser(userName)*/;
+        var user = GetUser(userName);
         var visitedLocation = _tourGuideService.GetUserLocation(user);
         List<Attraction> closestAttractions = _tourGuideService.GetNearByAttractions(visitedLocation);
 
