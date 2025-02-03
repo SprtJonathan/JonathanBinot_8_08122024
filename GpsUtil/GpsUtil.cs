@@ -35,6 +35,28 @@ public class GpsUtil
         }
     }
 
+    public async Task<VisitedLocation> GetUserLocationAsync(Guid userId)
+{
+    await rateLimiter.WaitAsync();
+    try
+    {
+        await Task.Delay(ThreadLocalRandom.Current.Next(30, 100));
+
+        double longitude = ThreadLocalRandom.NextDouble(-180.0, 180.0);
+        longitude = Math.Round(longitude, 6);
+
+        double latitude = ThreadLocalRandom.NextDouble(-90, 90);
+        latitude = Math.Round(latitude, 6);
+
+        return new VisitedLocation(userId, new Locations(latitude, longitude), DateTime.UtcNow);
+    }
+    finally
+    {
+        rateLimiter.Release();
+    }
+}
+
+
     public List<Attraction> GetAttractions()
     {
         rateLimiter.Wait();

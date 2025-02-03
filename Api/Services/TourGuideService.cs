@@ -90,6 +90,15 @@ public class TourGuideService : ITourGuideService
         return visitedLocation;
     }
 
+    public async Task<VisitedLocation> TrackUserLocationAsync(User user)
+    {
+        VisitedLocation visitedLocation = await _gpsUtil.GetUserLocationAsync(user.UserId);
+        user.AddToVisitedLocations(visitedLocation);
+        _rewardsService.CalculateRewards(user);
+        return visitedLocation;
+    }
+
+
     public List<Attraction> GetNearByAttractions(VisitedLocation visitedLocation)
     {
         // On récupère toutes les attractions

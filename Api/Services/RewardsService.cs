@@ -15,11 +15,22 @@ public class RewardsService : IRewardsService
     private readonly IRewardCentral _rewardsCentral;
     private static int count = 0;
 
+    private List<Attraction> _cachedAttractions;
+
     public RewardsService(IGpsUtil gpsUtil, IRewardCentral rewardCentral)
     {
         _gpsUtil = gpsUtil;
         _rewardsCentral =rewardCentral;
         _proximityBuffer = _defaultProximityBuffer;
+    }
+
+    private List<Attraction> GetAttractionsCached()
+    {
+        if (_cachedAttractions == null)
+        {
+            _cachedAttractions = _gpsUtil.GetAttractions();
+        }
+        return _cachedAttractions;
     }
 
     public void SetProximityBuffer(int proximityBuffer)
@@ -36,21 +47,29 @@ public class RewardsService : IRewardsService
     {
         count++;
         List<VisitedLocation> userLocations = user.VisitedLocations;
-        List<Attraction> attractions = _gpsUtil.GetAttractions();
+        List<Attraction> attractions = GetAttractionsCached();
 
-        foreach (var visitedLocation in userLocations)
+        Parallel.ForEach(userLocations, visitedLocation =>
         {
             foreach (var attraction in attractions)
-            {
+            {               
                 if (!user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName))
                 {
                     if (NearAttraction(visitedLocation, attraction))
                     {
-                        user.AddUserReward(new UserReward(visitedLocation, attraction, GetRewardPoints(attraction, user)));
+                        // Verrouiller l'accès à la collection pour l'itération et l'ajout
+                        lock (user.UserRewards)
+                        {
+                            // Vérifier de nouveau dans le lock pour éviter les doublons en cas de concurrence
+                            if (!user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName))
+                            {
+                                user.AddUserReward(new UserReward(visitedLocation, attraction, GetRewardPoints(attraction, user)));
+                            }
+                        }
                     }
                 }
             }
-        }
+        });
     }
 
     public bool IsWithinAttractionProximity(Attraction attraction, Locations location)
