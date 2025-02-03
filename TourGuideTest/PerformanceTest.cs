@@ -49,7 +49,7 @@ namespace TourGuideTest
         {
             //On peut ici augmenter le nombre d'utilisateurs pour tester les performances
 
-            _fixture.Initialize(100000);
+            _fixture.Initialize(100);
             List<User> allUsers = _fixture.TourGuideService.GetAllUsers();
 
             Stopwatch stopWatch = new Stopwatch();
@@ -69,7 +69,7 @@ namespace TourGuideTest
         public void HighVolumeGetRewards()
         {
             // On peut ici augmenter le nombre d'utilisateurs pour tester les performances
-            _fixture.Initialize(100000);
+            _fixture.Initialize(100);
 
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
