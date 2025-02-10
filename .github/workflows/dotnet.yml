@@ -28,4 +28,7 @@ jobs:
       run: dotnet test --no-build --verbosity normal
     - name: Official SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v4.2.1
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           
