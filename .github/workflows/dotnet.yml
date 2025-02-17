@@ -26,3 +26,14 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    - name: Official SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@v4.2.1
+      with:
+        projectBaseDir: ./
+        args: >
+          -Dsonar.projectKey=SprtJonathan_JonathanBinot_8_08122024
+          -Dsonar.organization=sprtjonathan
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: https://sonarcloud.io
+          
