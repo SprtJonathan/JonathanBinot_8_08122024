@@ -15,8 +15,6 @@ public class RewardsService : IRewardsService
     private readonly IRewardCentral _rewardsCentral;
     private static int count = 0;
 
-    private List<Attraction> _cachedAttractions;
-
     public RewardsService(IGpsUtil gpsUtil, IRewardCentral rewardCentral)
     {
         _gpsUtil = gpsUtil;
@@ -24,13 +22,9 @@ public class RewardsService : IRewardsService
         _proximityBuffer = _defaultProximityBuffer;
     }
 
-    private List<Attraction> GetAttractionsCached()
+    private async Task<List<Attraction>> GetAttractionsCached()
     {
-        if (_cachedAttractions == null)
-        {
-            _cachedAttractions = _gpsUtil.GetAttractions();
-        }
-        return _cachedAttractions;
+        return await _gpsUtil.GetAttractionsAsync();
     }
 
     public void SetProximityBuffer(int proximityBuffer)
@@ -43,24 +37,51 @@ public class RewardsService : IRewardsService
         _proximityBuffer = _defaultProximityBuffer;
     }
 
-    public void CalculateRewards(User user)
+    //public void CalculateRewards(User user)
+    //{
+    //    count++;
+    //    List<VisitedLocation> userLocations = user.VisitedLocations;
+    //    List<Attraction> attractions = GetAttractionsCached(); // étudier le ConcurrentBag pour la récupération de la liste
+
+    //    Parallel.ForEach(userLocations, visitedLocation =>
+    //    {
+    //        foreach (var attraction in attractions)
+    //        {               
+    //            if (!user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName))
+    //            {
+    //                if (NearAttraction(visitedLocation, attraction))
+    //                {
+    //                    // Verrouiller l'accès à la collection pour l'itération et l'ajout
+    //                    lock (user.UserRewards)
+    //                    {
+    //                        // Vérifier de nouveau dans le lock pour éviter les doublons en cas de concurrence
+    //                        if (!user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName))
+    //                        {
+    //                            user.AddUserReward(new UserReward(visitedLocation, attraction, GetRewardPoints(attraction, user)));
+    //                        }
+    //                    }
+    //                }
+    //            }
+    //        }
+    //    });
+    //}
+
+    public async Task CalculateRewardsAsync(User user)
     {
         count++;
         List<VisitedLocation> userLocations = user.VisitedLocations;
-        List<Attraction> attractions = GetAttractionsCached(); // étudier le ConcurrentBag pour la récupération de la liste
+        List<Attraction> attractions = await GetAttractionsCached();
 
-        Parallel.ForEach(userLocations, visitedLocation =>
+        var tasks = userLocations.Select(async visitedLocation =>
         {
             foreach (var attraction in attractions)
-            {               
+            {
                 if (!user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName))
                 {
                     if (NearAttraction(visitedLocation, attraction))
                     {
-                        // Verrouiller l'accès à la collection pour l'itération et l'ajout
                         lock (user.UserRewards)
                         {
-                            // Vérifier de nouveau dans le lock pour éviter les doublons en cas de concurrence
                             if (!user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName))
                             {
                                 user.AddUserReward(new UserReward(visitedLocation, attraction, GetRewardPoints(attraction, user)));
@@ -70,6 +91,8 @@ public class RewardsService : IRewardsService
                 }
             }
         });
+
+        await Task.WhenAll(tasks);
     }
 
     public bool IsWithinAttractionProximity(Attraction attraction, Locations location)

@@ -49,7 +49,7 @@ namespace TourGuideTest
         {
             //On peut ici augmenter le nombre d'utilisateurs pour tester les performances
 
-            _fixture.Initialize(10000);
+            _fixture.Initialize(100000);
             List<User> allUsers = _fixture.TourGuideService.GetAllUsers();
 
             Stopwatch stopWatch = new Stopwatch();
@@ -66,28 +66,36 @@ namespace TourGuideTest
         }
 
         [Fact]
-        public void HighVolumeGetRewards()
+        public async Task HighVolumeGetRewards()
         {
             // On peut ici augmenter le nombre d'utilisateurs pour tester les performances
-            _fixture.Initialize(10000);
+            _fixture.Initialize(100000);
 
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            Attraction attraction = _fixture.GpsUtil.GetAttractions()[0];
+            var attractions = await _fixture.GpsUtil.GetAttractionsAsync();
+            Attraction attraction = attractions[0];
             List<User> allUsers = _fixture.TourGuideService.GetAllUsers();
 
+            // Ajouter une localisation visitée pour chaque utilisateur
             allUsers.ForEach(u => u.AddToVisitedLocations(new VisitedLocation(u.UserId, attraction, DateTime.Now)));
 
-            Parallel.ForEach(allUsers, user =>
+            // Créer une copie de la liste des utilisateurs pour éviter l'erreur "Collection was modified; enumeration operation may not execute." 
+            var userListCopy = allUsers.ToList();
+
+            // Calculer les récompenses pour chaque utilisateur en parallèle
+            Parallel.ForEach(userListCopy, user =>
             {
-                _fixture.RewardsService.CalculateRewards(user);
+                _fixture.RewardsService.CalculateRewardsAsync(user).Wait();
             });
 
+            // Vérifier que chaque utilisateur a des récompenses
             foreach (var user in allUsers)
             {
                 Assert.True(user.UserRewards.Count > 0);
             }
+
             stopWatch.Stop();
             _fixture.TourGuideService.Tracker.StopTracking();
 

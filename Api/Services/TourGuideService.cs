@@ -86,7 +86,7 @@ public class TourGuideService : ITourGuideService
     {
         VisitedLocation visitedLocation = await _gpsUtil.GetUserLocationAsync(user.UserId);
         user.AddToVisitedLocations(visitedLocation);
-        _rewardsService.CalculateRewards(user);
+        await _rewardsService.CalculateRewardsAsync(user);
         return visitedLocation;
     }
 
@@ -117,19 +117,22 @@ public class TourGuideService : ITourGuideService
     * Methods Below: For Internal Testing
     * 
     **********************************************************************************/
-
     private void InitializeInternalUsers()
     {
-        for (int i = 0; i < InternalTestHelper.GetInternalUserNumber(); i++)
+        Parallel.For(0, InternalTestHelper.GetInternalUserNumber(), i =>
         {
             var userName = $"internalUser{i}";
             var user = new User(Guid.NewGuid(), userName, "000", $"{userName}@tourGuide.com");
             GenerateUserLocationHistory(user);
-            _internalUserMap.Add(userName, user);
-        }
+            lock (_internalUserMap)
+            {
+                _internalUserMap.Add(userName, user);
+            }
+        });
 
         _logger.LogDebug($"Created {InternalTestHelper.GetInternalUserNumber()} internal test users.");
     }
+
 
     private void GenerateUserLocationHistory(User user)
     {

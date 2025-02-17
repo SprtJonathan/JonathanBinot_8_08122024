@@ -39,13 +39,13 @@ public class RewardServiceTest : IClassFixture<DependencyFixture>
     }
 
     [Fact]
-    public void NearAllAttractions()
+    public async Task NearAllAttractionsAsync()
     {
         _fixture.Initialize(1);
         _fixture.RewardsService.SetProximityBuffer(int.MaxValue);
 
         var user = _fixture.TourGuideService.GetAllUsers().First();
-        _fixture.RewardsService.CalculateRewards(user);
+        await _fixture.RewardsService.CalculateRewardsAsync(user);
         var userRewards = _fixture.TourGuideService.GetUserRewards(user);
         _fixture.TourGuideService.Tracker.StopTracking();
 
