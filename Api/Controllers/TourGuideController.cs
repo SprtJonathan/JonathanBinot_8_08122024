@@ -53,7 +53,7 @@ public class TourGuideController : ControllerBase
             DistanceFromAttraction = rewardService.GetDistance(
                 new Locations(attraction.Latitude, attraction.Longitude),
                 visitedLocation.Location),
-            RewardPoints = rewardCentral.GetAttractionRewardPoints(attraction.AttractionId, visitedLocation.UserId)
+            RewardPoints = rewardCentral.GetAttractionRewardPointsAsync(attraction.AttractionId, visitedLocation.UserId)
         }).ToList();
 
         return Ok(result);

@@ -65,7 +65,7 @@ namespace TourGuideTest
             _fixture.TourGuideService.AddUser(user);
             _fixture.TourGuideService.AddUser(user2);
 
-            List<User> allUsers = _fixture.TourGuideService.GetAllUsers();
+            List<User> allUsers = _fixture.TourGuideService.GetAllUsersAsync().GetAwaiter().GetResult();
 
             _fixture.TourGuideService.Tracker.StopTracking();
 

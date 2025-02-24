@@ -59,9 +59,9 @@ public class TourGuideService : ITourGuideService
         return _internalUserMap.ContainsKey(userName) ? _internalUserMap[userName] : null;
     }
 
-    public List<User> GetAllUsers()
+    public Task<List<User>> GetAllUsersAsync()
     {
-        return _internalUserMap.Values.ToList();
+        return Task.FromResult(_internalUserMap.Values.ToList());
     }
 
     public void AddUser(User user)
@@ -117,6 +117,8 @@ public class TourGuideService : ITourGuideService
     * Methods Below: For Internal Testing
     * 
     **********************************************************************************/
+    private static readonly Random SharedRandom = new Random();
+
     private void InitializeInternalUsers()
     {
         Parallel.For(0, InternalTestHelper.GetInternalUserNumber(), i =>
@@ -133,30 +135,33 @@ public class TourGuideService : ITourGuideService
         _logger.LogDebug($"Created {InternalTestHelper.GetInternalUserNumber()} internal test users.");
     }
 
-
     private void GenerateUserLocationHistory(User user)
     {
-        for (int i = 0; i < 3; i++)
+        Parallel.For(0, 3, i =>
         {
-            var visitedLocation = new VisitedLocation(user.UserId, new Locations(GenerateRandomLatitude(), GenerateRandomLongitude()), GetRandomTime());
-            user.AddToVisitedLocations(visitedLocation);
-        }
+            lock (SharedRandom) // Verrou pour garantir des valeurs aléatoires uniques
+            {
+                var visitedLocation = new VisitedLocation(
+                    user.UserId,
+                    new Locations(GenerateRandomLatitude(), GenerateRandomLongitude()),
+                    GetRandomTime());
+                user.AddToVisitedLocations(visitedLocation);
+            }
+        });
     }
-
-    private static readonly Random random = new Random();
 
     private double GenerateRandomLongitude()
     {
-        return new Random().NextDouble() * (180 - (-180)) + (-180);
+        return SharedRandom.NextDouble() * (180 - (-180)) + (-180);
     }
 
     private double GenerateRandomLatitude()
     {
-        return new Random().NextDouble() * (90 - (-90)) + (-90);
+        return SharedRandom.NextDouble() * (90 - (-90)) + (-90);
     }
 
     private DateTime GetRandomTime()
     {
-        return DateTime.UtcNow.AddDays(-new Random().Next(30));
+        return DateTime.UtcNow.AddDays(-SharedRandom.Next(30));
     }
 }

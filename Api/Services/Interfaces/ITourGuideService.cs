@@ -10,7 +10,7 @@ namespace TourGuide.Services.Interfaces
         Tracker Tracker { get; }
 
         void AddUser(User user);
-        List<User> GetAllUsers();
+        Task<List<User>> GetAllUsersAsync();
         List<Attraction> GetNearByAttractions(VisitedLocation visitedLocation);
         List<Provider> GetTripDeals(User user);
         User GetUser(string userName);

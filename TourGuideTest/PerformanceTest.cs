@@ -48,9 +48,8 @@ namespace TourGuideTest
         public async Task HighVolumeTrackLocationAsync()
         {
             //On peut ici augmenter le nombre d'utilisateurs pour tester les performances
-
             _fixture.Initialize(100000);
-            List<User> allUsers = _fixture.TourGuideService.GetAllUsers();
+            List<User> allUsers = await _fixture.TourGuideService.GetAllUsersAsync();
 
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -68,29 +67,19 @@ namespace TourGuideTest
         [Fact]
         public async Task HighVolumeGetRewards()
         {
-            // On peut ici augmenter le nombre d'utilisateurs pour tester les performances
             _fixture.Initialize(100000);
-
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
             var attractions = await _fixture.GpsUtil.GetAttractionsAsync();
             Attraction attraction = attractions[0];
-            List<User> allUsers = _fixture.TourGuideService.GetAllUsers();
+            List<User> allUsers = await _fixture.TourGuideService.GetAllUsersAsync();
 
-            // Ajouter une localisation visitée pour chaque utilisateur
-            allUsers.ForEach(u => u.AddToVisitedLocations(new VisitedLocation(u.UserId, attraction, DateTime.Now)));
+            Parallel.ForEach(allUsers, user =>
+                user.AddToVisitedLocations(new VisitedLocation(user.UserId, attraction, DateTime.Now)));
 
-            // Créer une copie de la liste des utilisateurs pour éviter l'erreur "Collection was modified; enumeration operation may not execute." 
-            var userListCopy = allUsers.ToList();
+            await Task.WhenAll(allUsers.Select(user => _fixture.RewardsService.CalculateRewardsAsync(user)));
 
-            // Calculer les récompenses pour chaque utilisateur en parallèle
-            Parallel.ForEach(userListCopy, user =>
-            {
-                _fixture.RewardsService.CalculateRewardsAsync(user).Wait();
-            });
-
-            // Vérifier que chaque utilisateur a des récompenses
             foreach (var user in allUsers)
             {
                 Assert.True(user.UserRewards.Count > 0);
