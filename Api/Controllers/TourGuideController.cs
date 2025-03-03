@@ -47,7 +47,7 @@ public class TourGuideController : ControllerBase
 
         var result = closestAttractions.Select(attraction => new
         {
-            AttractionName = attraction.AttractionName,
+            attraction.AttractionName,
             AttractionLocation = new Locations(attraction.Latitude, attraction.Longitude),
             UserLocation = visitedLocation.Location,
             DistanceFromAttraction = rewardService.GetDistance(

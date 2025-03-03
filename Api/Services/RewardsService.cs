@@ -13,14 +13,13 @@ public class RewardsService : IRewardsService
     private readonly int _attractionProximityRange = 200;
     private readonly IGpsUtil _gpsUtil;
     private readonly IRewardCentral _rewardsCentral;
-    private static int count = 0;
-    private List<Attraction> _attractionsCache;
+    private List<Attraction>? _attractionsCache;
     private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
     public RewardsService(IGpsUtil gpsUtil, IRewardCentral rewardCentral)
     {
         _gpsUtil = gpsUtil;
-        _rewardsCentral =rewardCentral;
+        _rewardsCentral = rewardCentral;
         _proximityBuffer = _defaultProximityBuffer;
     }
 

@@ -94,7 +94,7 @@ public class TourGuideService : ITourGuideService
     public List<Attraction> GetNearByAttractions(VisitedLocation visitedLocation)
     {
         // On récupère toutes les attractions
-        var allAttractions = _gpsUtil.GetAttractions();
+        var allAttractions = _gpsUtil.GetAttractionsAsync().GetAwaiter().GetResult();
 
         // On trie les attractions par distance croissante par rapport à la position de l'utilisateur
         var closestAttractions = allAttractions
