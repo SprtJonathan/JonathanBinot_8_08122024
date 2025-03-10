@@ -1,12 +1,5 @@
 ﻿using GpsUtil.Location;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TourGuide.Services;
 using TourGuide.Users;
-using TourGuide.Utilities;
 using TripPricer;
 
 namespace TourGuideTest
@@ -65,7 +58,7 @@ namespace TourGuideTest
             _fixture.TourGuideService.AddUser(user);
             _fixture.TourGuideService.AddUser(user2);
 
-            List<User> allUsers = _fixture.TourGuideService.GetAllUsersAsync().GetAwaiter().GetResult();
+            List<User> allUsers = _fixture.TourGuideService.GetAllUsers().GetAwaiter().GetResult();
 
             _fixture.TourGuideService.Tracker.StopTracking();
 

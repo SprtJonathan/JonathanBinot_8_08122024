@@ -1,11 +1,5 @@
 ﻿using GpsUtil.Location;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TourGuide.Users;
-using TourGuide.Utilities;
 
 namespace TourGuideTest;
 
@@ -46,7 +40,7 @@ public class RewardServiceTest : IClassFixture<DependencyFixture>
         _fixture.Initialize(1);
         _fixture.RewardsService.SetProximityBuffer(int.MaxValue);
 
-        var users = await _fixture.TourGuideService.GetAllUsersAsync();
+        var users = await _fixture.TourGuideService.GetAllUsers();
         var user = users[0];
         await _fixture.RewardsService.CalculateRewardsAsync(user);
         var userRewards = _fixture.TourGuideService.GetUserRewards(user);

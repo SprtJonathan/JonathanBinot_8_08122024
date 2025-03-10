@@ -59,7 +59,7 @@ public class TourGuideService : ITourGuideService
         return _internalUserMap.ContainsKey(userName) ? _internalUserMap[userName] : null;
     }
 
-    public Task<List<User>> GetAllUsersAsync()
+    public Task<List<User>> GetAllUsers()
     {
         return Task.FromResult(_internalUserMap.Values.ToList());
     }

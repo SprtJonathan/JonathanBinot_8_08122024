@@ -31,7 +31,7 @@ public class Tracker
 
         while (!_cancellationTokenSource.Token.IsCancellationRequested)
         {
-            List<User> users = await _tourGuideService.GetAllUsersAsync();
+            List<User> users = await _tourGuideService.GetAllUsers();
             _logger.LogDebug($"Begin Tracker. Tracking {users.Count} users.");
 
             stopwatch.Start();
