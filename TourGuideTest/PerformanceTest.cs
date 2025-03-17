@@ -30,6 +30,8 @@ namespace TourGuideTest
 
         private readonly ITestOutputHelper _output;
 
+        private readonly int userAmount = 100000;
+
         public PerformanceTest(DependencyFixture fixture, ITestOutputHelper output)
         {
             _fixture = fixture;
@@ -40,14 +42,16 @@ namespace TourGuideTest
         public async Task HighVolumeTrackLocationAsync()
         {
             //On peut ici augmenter le nombre d'utilisateurs pour tester les performances
-            _fixture.Initialize(100000);
+            _fixture.Initialize(userAmount);
             List<User> allUsers = await _fixture.TourGuideService.GetAllUsers();
 
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            var tasks = allUsers.Select(user => _fixture.TourGuideService.TrackUserLocation(user));
-            await Task.WhenAll(tasks);
+            await Parallel.ForEachAsync(allUsers, new ParallelOptions { MaxDegreeOfParallelism = 1000 }, async (user, ct) =>
+            {
+                await _fixture.TourGuideService.TrackUserLocation(user);
+            });
 
             stopWatch.Stop();
             _fixture.TourGuideService.Tracker.StopTracking();
@@ -57,9 +61,9 @@ namespace TourGuideTest
         }
 
         [Fact]
-        public async Task HighVolumeGetRewards()
+        public async Task HighVolumeGetRewardsAsync()
         {
-            _fixture.Initialize(100000);
+            _fixture.Initialize(userAmount);
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 

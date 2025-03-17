@@ -11,7 +11,7 @@ namespace GpsUtil;
 
 public class GpsUtil
 {
-    private static readonly SemaphoreSlim rateLimiter = new(1000, 1000);
+    private static readonly SemaphoreSlim rateLimiter = new(5000, 5000);
     private readonly ConcurrentBag<Attraction> _cachedAttractions;
 
     public GpsUtil()
