@@ -56,46 +56,47 @@ public class RewardsService : IRewardsService
 
     public async Task CalculateRewardsAsync(User user)
     {
-        // Créer des copies des collections pour éviter les modifications concurrentes
         List<VisitedLocation> userLocationsCopy = new List<VisitedLocation>(user.VisitedLocations);
         List<Attraction> attractionsCopy = new List<Attraction>(await GetAttractionsCachedAsync());
 
-        // Objet pour synchroniser l'accès à UserRewards
+        // Collecter les récompenses potentielles sans calculer les points immédiatement
+        List<(VisitedLocation location, Attraction attraction)> potentialRewards = new List<(VisitedLocation, Attraction)>();
         object lockObject = new object();
 
-        await Task.WhenAll(userLocationsCopy.Select(async visitedLocation =>
-        {
-            foreach (var attraction in attractionsCopy)
+        await Task.WhenAll(userLocationsCopy.Select(visitedLocation =>
+            Task.Run(() =>
             {
-                bool shouldAddReward = false;
-
-                // Vérifier si la récompense existe déjà
-                lock (lockObject)
+                foreach (var attraction in attractionsCopy)
                 {
-                    if (!user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName))
+                    lock (lockObject)
                     {
-                        shouldAddReward = true;
-                    }
-                }
-
-                if (shouldAddReward)
-                {
-                    if (NearAttraction(visitedLocation, attraction))
-                    {
-                        int rewardPoints = await GetRewardPointsAsync(attraction, user);
-
-                        // Ajouter la récompense de manière thread-safe
-                        lock (lockObject)
+                        if (!user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName) &&
+                            NearAttraction(visitedLocation, attraction))
                         {
-                            if (!user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName))
-                            {
-                                user.AddUserReward(new UserReward(visitedLocation, attraction, rewardPoints));
-                            }
+                            potentialRewards.Add((visitedLocation, attraction));
                         }
                     }
                 }
+            })
+        ));
+
+        var rewardTasks = potentialRewards.Select(async pr =>
+        {
+            int points = await GetRewardPointsAsync(pr.attraction, user);
+            return (pr.location, pr.attraction, points);
+        });
+        var rewardsToAdd = await Task.WhenAll(rewardTasks);
+
+        lock (lockObject)
+        {
+            foreach (var (location, attraction, points) in rewardsToAdd)
+            {
+                if (!user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName))
+                {
+                    user.AddUserReward(new UserReward(location, attraction, points));
+                }
             }
-        }));
+        }
     }
 
     public bool IsWithinAttractionProximity(Attraction attraction, Locations location)
